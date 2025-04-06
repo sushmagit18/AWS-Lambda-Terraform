@@ -3,7 +3,7 @@ def lambda_handler(event, context):
     import json
 
     # Ensure the bucket exists in the correct region
-    bucket_name = "myuploadbucket040104"
+    bucket_name = "myuploadbuc54321t"
     file_key = "sample.txt"
 
     s3 = boto3.client('s3', region_name='us-east-1')

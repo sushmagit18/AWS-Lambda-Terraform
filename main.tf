@@ -1,4 +1,11 @@
+variable "region" {
+  description = "The AWS region to deploy resources"
+  default     = "us-east-1"
+}
 
+provider "aws" {
+  region = "us-east-1"
+}
 
 # IAM Role for Lambda
 resource "aws_iam_role" "lambda_role" {
@@ -31,12 +38,12 @@ resource "aws_iam_policy_attachment" "lambda_basic_policy" {
 
 // Bucket used for Glue scripts and general services
 resource "aws_s3_bucket" "data_bucket" {
-  bucket = "mystoragebucket040104"
+  bucket = "mystoragebuc12345t"
 }
 
 // Bucket used exclusively for file uploads via the process_s3 Lambda
 resource "aws_s3_bucket" "upload_bucket" {
-  bucket = "myuploadbucket040104"
+  bucket = "myuploadbuc54321t"
 }
 
 # DynamoDB Table
@@ -78,8 +85,6 @@ resource "aws_lambda_function" "start_glue" {
   role          = aws_iam_role.lambda_role.arn
   handler       = "start_glue.lambda_handler"
   filename      = "start_glue.zip"
-  source_code_hash = filebase64sha256("start_glue.zip")
-  publish          = true
 }
 
 # API Gateway
@@ -304,7 +309,7 @@ resource "aws_iam_policy" "glue_policy" {
           "glue:GetJobRun",
           "glue:GetJobRuns"
         ],
-        "Resource": "arn:aws:glue:us-east-1:571600854327:job/HelloWorld"
+        Resource = aws_glue_job.glue_job.arn
       }
     ]
   })
@@ -361,6 +366,7 @@ resource "aws_iam_policy" "s3_policy_update" {
     ]
   })
 }
+
 
 resource "aws_iam_policy_attachment" "s3_policy_update_attach" {
   name       = "s3_policy_update_attachment"
@@ -420,3 +426,32 @@ resource "aws_s3_bucket_policy" "data_bucket_policy" {
   })
 }
 
+output "api_url" {
+  description = "Base URL for the API Gateway deployment"
+  value       = aws_api_gateway_deployment.deployment.invoke_url
+}
+
+output "glue_job_name" {
+  description = "Name of the Glue job"
+  value       = aws_glue_job.glue_job.name
+}
+
+output "s3_api_url" {
+  description = "API endpoint URL for S3 service (listing and uploads)"
+  value       = "${aws_api_gateway_deployment.deployment.invoke_url}/s3"
+}
+
+output "data_bucket_name" {
+  description = "Name of the S3 bucket for Glue scripts and general services"
+  value       = aws_s3_bucket.data_bucket.bucket
+}
+
+output "upload_bucket_name" {
+  description = "Name of the S3 bucket used exclusively for file uploads via ProcessS3"
+  value       = aws_s3_bucket.upload_bucket.bucket
+}
+
+output "upload_api_url" {
+  description = "API endpoint URL for S3 upload service (POST method to obtain a pre-signed URL)"
+  value       = "${aws_api_gateway_deployment.deployment.invoke_url}/s3"
+}
